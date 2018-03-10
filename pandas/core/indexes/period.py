@@ -133,30 +133,36 @@ class PeriodIndex(DatelikeOps, DatetimeIndexOpsMixin, Int64Index):
     Parameters
     ----------
     data : array-like (1-dimensional), optional
-        Optional period-like data to construct index with
-    copy : bool
-        Make a copy of input ndarray
+        Optional period-like data to construct index with.
+    ordinal : int, default None
+        Ordinal number used if data is not provided to create the input data
+        array.
     freq : string or period object, optional
-        One of pandas period strings or corresponding objects
+        One of pandas period strings or corresponding objects.
     start : starting value, period-like, optional
         If data is None, used as the start point in generating regular
         period data.
-    periods : int, optional, > 0
-        Number of periods to generate, if generating index. Takes precedence
-        over end argument
     end : end value, period-like, optional
         If periods is none, generated index will extend to first conforming
-        period on or just past end argument
-    year : int, array, or Series, default None
-    month : int, array, or Series, default None
-    quarter : int, array, or Series, default None
-    day : int, array, or Series, default None
-    hour : int, array, or Series, default None
-    minute : int, array, or Series, default None
-    second : int, array, or Series, default None
+        period on or just past end argument.
+    periods : int, optional, > 0
+        Number of periods to generate, if generating index. Takes precedence
+        over end argument.
+    copy : bool
+        Make a copy of input ndarray.
+    name : str, default None
+        Used to give a name to the created PeriodIndex.
     tz : object, default None
-        Timezone for converting datetime64 data to Periods
+        Timezone for converting datetime64 data to Periods.
     dtype : str or PeriodDtype, default None
+        Explicitly define the PeriodIndex dtype.
+    kwargs : dict
+        These parameters will be used to create the PeriodIndex.
+
+    Returns
+    -------
+    PeriodIndex
+        The instance created.
 
     Attributes
     ----------
@@ -191,9 +197,7 @@ class PeriodIndex(DatelikeOps, DatetimeIndexOpsMixin, Int64Index):
 
     Examples
     --------
-    >>> idx = PeriodIndex(year=year_arr, quarter=q_arr)
-
-    >>> idx2 = PeriodIndex(start='2000', end='2010', freq='A')
+    >>> idx = pd.PeriodIndex(start='2000', end='2010', freq='A')
 
     See Also
     ---------
@@ -234,15 +238,8 @@ class PeriodIndex(DatelikeOps, DatetimeIndexOpsMixin, Int64Index):
         cls.__ge__ = _period_index_cmp('__ge__', cls)
 
     def __new__(cls, data=None, ordinal=None, freq=None, start=None, end=None,
-                periods=None, tz=None, dtype=None, copy=False, name=None,
-                **fields):
-
-        valid_field_set = {'year', 'month', 'day', 'quarter',
-                           'hour', 'minute', 'second'}
-
-        if not set(fields).issubset(valid_field_set):
-            raise TypeError('__new__() got an unexpected keyword argument {}'.
-                            format(list(set(fields) - valid_field_set)[0]))
+                periods=None, copy=False, name=None, tz=None, dtype=None,
+                **kwargs):
 
         if periods is not None:
             if is_float(periods):
@@ -274,7 +271,7 @@ class PeriodIndex(DatelikeOps, DatetimeIndexOpsMixin, Int64Index):
                 data = np.asarray(ordinal, dtype=np.int64)
             else:
                 data, freq = cls._generate_range(start, end, periods,
-                                                 freq, fields)
+                                                 freq, kwargs)
             return cls._from_ordinals(data, name=name, freq=freq)
 
         if isinstance(data, PeriodIndex):
